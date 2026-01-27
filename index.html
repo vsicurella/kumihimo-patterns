@@ -40,8 +40,8 @@
             -moz-appearance: none;
             appearance: none;
             background-color: transparent;
-            width: 25px;
-            height: 25px;
+            width: 30px ;
+            height: 30px;
             border: none;
             cursor: pointer;
         }
@@ -59,8 +59,22 @@
     <div class="container">
         <div class="pattern-preview"></div>
         <div class="controls">
-            <div class="pattern-details"></div>
-            <div class="color-details"></div>
+            <!-- <div class="pattern-details">
+                <label for="pattern-select">Pattern:</label>
+                <select id="pattern-select"></select>
+                <br>
+                <label for="num-threads-input"># Threads:</label>
+                <input id="num-threads-input" type="number" min=8 max=32 step=2 value='16'/>
+            </div> -->
+            <div class="color-details">
+                <label for="pattern-select">Pattern:</label>
+                <select id="pattern-select"></select>
+                <br>
+                <label for="num-threads-input"># Threads:</label>
+                <input id="num-threads-input" type="number" min=8 max=32 step=2 value='16'/>
+                <button id="move-left" onclick="rotateColorsCounterClockwise()">&lt;</button>
+                <button id="move-right" onclick="rotateColorsClockwise()">&gt;</button>
+            </div>
         </div>
     </div>
 

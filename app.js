@@ -1,7 +1,15 @@
+function contrastingColor(p5, color)
+{
+    if (p5.lightness(color) > 50)
+        return p5.color(0)
+    return p5.color(255)
+    
+}
+
 class Braid
 {
-    size = 16
-    palette = []
+    size;
+    palette;
 
     constructor(numThreads = 16, colors = null)
     {
@@ -9,8 +17,14 @@ class Braid
 
         const colorMap = colors || [];
         this.palette = []
-        for (var i = 0; i < this.size; i++)
-            this.palette.push(colorMap[i] ? colorMap[i] : "rgb(255,0,0)")
+        // for (var i = 0; i < this.size; i++)
+        //     this.palette.push(colorMap[i] ? colorMap[i] : "rgb(255,0,0)")
+        
+        for (var i = 0; i < this.size / 2; i++)
+        {
+            this.palette.push("rgb(255,0,0)")
+            this.palette.push("rgb(0,0,255)")
+        }
     }
 
     color(index)
@@ -33,7 +47,8 @@ const PATTERNS =
 let braid = new Braid(16);
 console.log(braid)
 
-let pattern = PATTERNS.NaikiGumi;
+// let pattern = PATTERNS.NaikiGumi;
+let pattern = PATTERNS.NaikiGaeshi;
 
 const PatternSketch = (p5) => {
 
@@ -43,21 +58,43 @@ const PatternSketch = (p5) => {
         const area = document.getElementsByClassName('pattern-preview')[0];
         const canvas = p5.createCanvas(area.clientWidth, area.clientHeight);
         canvas.parent(area);
+
+        p5.colorMode('rgb')
     };
 
     p5.draw = () => {
         // p5.background(255);
         p5.textAlign(p5.CENTER)
-        
+
+        let style = null;
+        let styleParity = 1;
+
         switch (pattern)
         {
         case PATTERNS.NaikiGumi:
+            style = 'plain-weave'
+            styleParity = 1;
+            break;
+        case PATTERNS.NaikiGaeshi:
+            style = 'plain-weave'
+            styleParity = 2;
+            break;
+        default:
+            p5.text("Unknown pattern: " + pattern, p5.width/2, p5.height/2);
+            return;
+        }
+        
+        switch (style)
+        {
+        case 'plain-weave':
 
             // basic cross stitch pattern, squares rotated by 45 degrees
             const size = 20;
 
             const patternWidth = size * (braid.size + 0.5);
             const patternHeight = size * (braid.size * 2);
+
+            // const threadSkip = styleParity * 2;
 
             const origin = { x: p5.abs(p5.width - patternWidth) * 0.5, y: p5.abs(p5.height - patternHeight) * 0.5};
 
@@ -66,22 +103,20 @@ const PatternSketch = (p5) => {
                 for (let col = 0; col < braid.size / 2; col++)
                 {
                     let thread = -1;
-                    if (row % 2 == 0)
+                    if (row % 2 == 0) // evens (shown as odds)
                     {
-                        thread = (16 - row + 2 * col) % 16
+                        thread = ((braid.size * styleParity) - row * styleParity + 2 * col) % braid.size
+                        // thread = ((braid.size*styleParity) - row * styleParity + 2 * col) % braid.size
+                        // thread = ((16 - row) * styleParity * 2 + 2 * col) % 16;
                     }
-                    else
+                    else // odds (shown as evens)
                     {
-                        thread = (row + 2 * col) % 16
+                        thread = ((row - 1) * styleParity + 2 * col + 1) % braid.size
+                        // thread = -1;
                     }
 
-                    // evens: (16 - row + 2 * col) % 16
-                    // odds: (row + 1 + 2 * col)
-                    // combined = (row * (-1 - (row % 2) + p5.pow(16, 1 - (row % 2)))))
-                    
                     const centerX = origin.x + size * (col * 2 + 1 + p5.pow(0, row % 2));
                     const centerY = origin.y + size * (row + 1);
-                    
 
                     // square version
                     let color = 'rgb(0,0,0,0)';
@@ -96,8 +131,11 @@ const PatternSketch = (p5) => {
                     p5.vertex(centerX, centerY + size)
                     p5.endShape(p5.CLOSE)
 
-                    p5.fill(0)
-                    p5.text(`${thread+1}`, centerX, centerY);
+                    let textColor = contrastingColor(p5,color);
+                    p5.fill(textColor)
+                    
+                    // p5.text(`${row}`, centerX, centerY);
+                    // p5.text(`${thread+1}`, centerX, centerY);
 
                 }
             }

@@ -168,6 +168,11 @@ const DetailsSketch = (p5) => {
 const ColorSketch = (p5) => {
 
     let DIV = null;
+    let CANVAS = null;
+    let PADDING = 0;
+
+    let labelScalar = 1.2;
+    let radiusScalar = 0.3;
 
     let radius;
     let cx;
@@ -176,18 +181,27 @@ const ColorSketch = (p5) => {
     let swatchRadius = 15;
 
     let layout = [];
-
     let clicked = []
+
+    function positionColorPicker(picker, x, y)
+    {
+        // const size = window.getComputedStyle(picker.elt, null).getPropertyValue('clientWidth');
+        const offset = Math.round(PADDING / 2);
+        picker.position(CANVAS.offsetLeft + x - offset, CANVAS.offsetTop + y - offset)
+    }
 
     p5.setup = () => {
         const area = document.getElementsByClassName('color-details')[0];
         DIV = area;
-        console.log(DIV)
 
         const canvas = p5.createCanvas(area.clientWidth, area.clientHeight);
         canvas.parent(area);
+        
+        CANVAS = canvas.elt
+        PADDING = parseInt(window.getComputedStyle(DIV, null).getPropertyValue('padding'))
+        console.log(CANVAS)
 
-        radius = p5.height * 0.45;
+        radius = p5.height * radiusScalar;
         cx = p5.width/2;
         cy = p5.height/2
 
@@ -196,21 +210,45 @@ const ColorSketch = (p5) => {
 
         for (let t = 0; t < braid.size; t++)
         {
-            let theta = (2 * p5.PI / braid.size * t + p5.PI * 1.5) % (2 * p5.PI);
-
+            const theta = (2 * p5.PI / braid.size * t + p5.PI * 1.5) % (2 * p5.PI);
             const x = p5.cos(theta) * radius + cx;
             const y = p5.sin(theta) * radius + cy;
 
             const picker = p5.createColorPicker(braid.color(t));
-            // console.log(picker)
-            // picker.parent(area)
-            // picker.position(x, y, 'relative')
+            positionColorPicker(picker, x, y)
+            picker.elt.classList.add('circle-picker')
 
-            layout.push({ theta: theta, x: x, y: y, picker: picker });
-
+            layout.push({ 
+                theta: theta, 
+                x: x, 
+                y: y,
+                xLabel: (x - cx) * labelScalar + cx,
+                yLabel: (y - cy) * labelScalar + cy,
+                picker: picker 
+            });
             clicked.push(false)
         }
     };
+
+    p5.windowResized = () => {
+        radius = p5.height * radiusScalar;
+        cx = p5.width/2;
+        cy = p5.height/2
+
+        for (let t = 0; t < braid.size; t++)
+        {
+            const l = layout[t];
+
+            const x = p5.cos(l.theta) * radius + cx;
+            const y = p5.sin(l.theta) * radius + cy;
+
+            l.x = x;
+            l.y = y;
+            l.xLabel = (x - cx) * labelScalar + cx;
+            l.yLabel = (y - cy) * labelScalar + cy;
+            positionColorPicker(l.picker, x, y)
+        }
+    }
 
     p5.draw = () => {
         p5.textAlign(p5.CENTER)
@@ -221,25 +259,21 @@ const ColorSketch = (p5) => {
         p5.fill(0,0,0,0)
         p5.circle(cx, cy, radius * 2)
 
-        let bunches = 2;
-        let bunchAmt = 0;
-        switch (pattern)
-        {
-        case PATTERNS.NaikiGumi:
-            bunchAmt = -0.05;
-            break;
-        default:
-            break;
-        }
+        // let bunches = 2;
+        // let bunchAmt = 0;
+        // switch (pattern)
+        // {
+        // case PATTERNS.NaikiGumi:
+        //     bunchAmt = -0.05;
+        //     break;
+        // default:
+        //     break;
+        // }
 
         for (let t = 0; t < braid.size; t++)
         {
             // update colors first
             braid.set(t, layout[t].picker.value());
-
-
-            const x = layout[t].x;
-            const y = layout[t].y;
 
             if (clicked[t])
                 p5.stroke(0)
@@ -253,36 +287,39 @@ const ColorSketch = (p5) => {
                 p5.stroke(0)
                 p5.fill(0,0,0,0);
             }
-            p5.circle(x, y, swatchRadius)
+            // p5.circle(x, y, swatchRadius)
+
+            const x = layout[t].xLabel;
+            const y = layout[t].yLabel;
 
             p5.fill(0)
-            p5.text(t+1, x, y)
+            p5.text(t+1, x, y + 8)
         }
     };
 
-    p5.mouseClicked = () =>
-    {
-        const step = (2*p5.PI / braid.size);
-        const mtheta = (p5.atan2(p5.mouseY-cy, p5.mouseX-cx) + p5.PI * 2) % (2*p5.PI);
-        const mradius = p5.dist(p5.mouseX, p5.mouseY, p5.width/2, p5.height/2)
-        for (var t = 0; t < braid.size; t++)
-        {
-            const theta = layout[t].theta;
-            // console.log(mtheta, theta, step*0.5)
-            // console.log(p5.abs(mtheta - theta), p5.abs(mradius - radius))
-            if (p5.abs(mtheta - theta) < step * 0.5 && p5.abs(mradius - radius) < swatchRadius/2)
-            {
-                // p5.stroke(0)
-                // p5.fill(0)
-                // p5.circle(layout.x, layout.y, 10)
-                clicked[t] = true;
+    // p5.mouseClicked = () =>
+    // {
+    //     const step = (2*p5.PI / braid.size);
+    //     const mtheta = (p5.atan2(p5.mouseY-cy, p5.mouseX-cx) + p5.PI * 2) % (2*p5.PI);
+    //     const mradius = p5.dist(p5.mouseX, p5.mouseY, p5.width/2, p5.height/2)
+    //     for (var t = 0; t < braid.size; t++)
+    //     {
+    //         const theta = layout[t].theta;
+    //         // console.log(mtheta, theta, step*0.5)
+    //         // console.log(p5.abs(mtheta - theta), p5.abs(mradius - radius))
+    //         if (p5.abs(mtheta - theta) < step * 0.5 && p5.abs(mradius - radius) < swatchRadius/2)
+    //         {
+    //             // p5.stroke(0)
+    //             // p5.fill(0)
+    //             // p5.circle(layout.x, layout.y, 10)
+    //             clicked[t] = true;
 
-                layout[t].picker.elt.click()
+    //             layout[t].picker.elt.click()
                 
-                break;
-            }
-        }
-    }
+    //             break;
+    //         }
+    //     }
+    // }
 
     p5.mouseReleased = () =>
     {

@@ -1,0 +1,276 @@
+class Braid
+{
+    size = 16
+    palette = []
+
+    constructor(numThreads = 16, colors = null)
+    {
+        this.size = numThreads
+
+        const colorMap = colors || [];
+        this.palette = []
+        for (var i = 0; i < this.size; i++)
+            this.palette.push(colorMap[i] ? colorMap[i] : "rgb(255,0,0)")
+    }
+
+    color(index)
+    {
+        return this.palette[index]
+    }
+
+    set(index, col)
+    {
+        this.palette[index] = col;
+    }
+}
+
+const PATTERNS =
+{
+    NaikiGumi: "Naiki Gumi",
+    NaikiGaeshi: "Naiki Gaeshi"
+}
+
+let braid = new Braid(16);
+console.log(braid)
+
+let pattern = PATTERNS.NaikiGumi;
+
+const PatternSketch = (p5) => {
+
+    // let squares = [];
+
+    p5.setup = () => {
+        const area = document.getElementsByClassName('pattern-preview')[0];
+        const canvas = p5.createCanvas(area.clientWidth, area.clientHeight);
+        canvas.parent(area);
+    };
+
+    p5.draw = () => {
+        // p5.background(255);
+        p5.textAlign(p5.CENTER)
+        
+        switch (pattern)
+        {
+        case PATTERNS.NaikiGumi:
+
+            // basic cross stitch pattern, squares rotated by 45 degrees
+            const size = 20;
+
+            const patternWidth = size * (braid.size + 0.5);
+            const patternHeight = size * (braid.size * 2);
+
+            const origin = { x: p5.abs(p5.width - patternWidth) * 0.5, y: p5.abs(p5.height - patternHeight) * 0.5};
+
+            for (let row = 0; row <= braid.size; row++)
+            {
+                for (let col = 0; col < braid.size / 2; col++)
+                {
+                    let thread = -1;
+                    if (row % 2 == 0)
+                    {
+                        thread = (16 - row + 2 * col) % 16
+                    }
+                    else
+                    {
+                        thread = (row + 2 * col) % 16
+                    }
+
+                    // evens: (16 - row + 2 * col) % 16
+                    // odds: (row + 1 + 2 * col)
+                    // combined = (row * (-1 - (row % 2) + p5.pow(16, 1 - (row % 2)))))
+                    
+                    const centerX = origin.x + size * (col * 2 + 1 + p5.pow(0, row % 2));
+                    const centerY = origin.y + size * (row + 1);
+                    
+
+                    // square version
+                    let color = 'rgb(0,0,0,0)';
+                    if (braid.color(thread))
+                        color = braid.color(thread);
+                    p5.fill(color)
+                    
+                    p5.beginShape()
+                    p5.vertex(centerX - size, centerY)
+                    p5.vertex(centerX, centerY - size)
+                    p5.vertex(centerX + size, centerY)
+                    p5.vertex(centerX, centerY + size)
+                    p5.endShape(p5.CLOSE)
+
+                    p5.fill(0)
+                    p5.text(`${thread+1}`, centerX, centerY);
+
+                }
+            }
+
+
+            break;
+
+        default:
+            p5.text("Pattern not implemented", p5.width/2,p5.height/2)
+            break;
+        }
+    };
+};
+
+const DetailsSketch = (p5) => {
+    p5.setup = () => {
+        const area = document.getElementsByClassName('pattern-details')[0];
+        const canvas = p5.createCanvas(area.clientWidth, area.clientHeight);
+        canvas.parent(area);
+    };
+
+    p5.draw = () => {
+        p5.background(240);
+        p5.stroke(0);
+        p5.text(pattern, 10, 20);
+        p5.text(`Threads: ${braid.size}`, 10, 50);
+    };
+};
+
+const ColorSketch = (p5) => {
+
+    let DIV = null;
+
+    let radius;
+    let cx;
+    let cy;
+
+    let swatchRadius = 15;
+
+    let layout = [];
+
+    let clicked = []
+
+    p5.setup = () => {
+        const area = document.getElementsByClassName('color-details')[0];
+        DIV = area;
+        console.log(DIV)
+
+        const canvas = p5.createCanvas(area.clientWidth, area.clientHeight);
+        canvas.parent(area);
+
+        radius = p5.height * 0.45;
+        cx = p5.width/2;
+        cy = p5.height/2
+
+        layout = [];
+        clicked = [];
+
+        for (let t = 0; t < braid.size; t++)
+        {
+            let theta = (2 * p5.PI / braid.size * t + p5.PI * 1.5) % (2 * p5.PI);
+
+            const x = p5.cos(theta) * radius + cx;
+            const y = p5.sin(theta) * radius + cy;
+
+            const picker = p5.createColorPicker(braid.color(t));
+            // console.log(picker)
+            // picker.parent(area)
+            // picker.position(x, y, 'relative')
+
+            layout.push({ theta: theta, x: x, y: y, picker: picker });
+
+            clicked.push(false)
+        }
+    };
+
+    p5.draw = () => {
+        p5.textAlign(p5.CENTER)
+        p5.background(240);
+        p5.stroke(0);
+
+        p5.stroke(0)
+        p5.fill(0,0,0,0)
+        p5.circle(cx, cy, radius * 2)
+
+        let bunches = 2;
+        let bunchAmt = 0;
+        switch (pattern)
+        {
+        case PATTERNS.NaikiGumi:
+            bunchAmt = -0.05;
+            break;
+        default:
+            break;
+        }
+
+        for (let t = 0; t < braid.size; t++)
+        {
+            // update colors first
+            braid.set(t, layout[t].picker.value());
+
+
+            const x = layout[t].x;
+            const y = layout[t].y;
+
+            if (clicked[t])
+                p5.stroke(0)
+            else
+                p5.stroke(0,0,0,0)
+
+            if (braid.color(t))
+                p5.fill(braid.color(t))
+            else
+            {
+                p5.stroke(0)
+                p5.fill(0,0,0,0);
+            }
+            p5.circle(x, y, swatchRadius)
+
+            p5.fill(0)
+            p5.text(t+1, x, y)
+        }
+    };
+
+    p5.mouseClicked = () =>
+    {
+        const step = (2*p5.PI / braid.size);
+        const mtheta = (p5.atan2(p5.mouseY-cy, p5.mouseX-cx) + p5.PI * 2) % (2*p5.PI);
+        const mradius = p5.dist(p5.mouseX, p5.mouseY, p5.width/2, p5.height/2)
+        for (var t = 0; t < braid.size; t++)
+        {
+            const theta = layout[t].theta;
+            // console.log(mtheta, theta, step*0.5)
+            // console.log(p5.abs(mtheta - theta), p5.abs(mradius - radius))
+            if (p5.abs(mtheta - theta) < step * 0.5 && p5.abs(mradius - radius) < swatchRadius/2)
+            {
+                // p5.stroke(0)
+                // p5.fill(0)
+                // p5.circle(layout.x, layout.y, 10)
+                clicked[t] = true;
+
+                layout[t].picker.elt.click()
+                
+                break;
+            }
+        }
+    }
+
+    p5.mouseReleased = () =>
+    {
+        
+        // const step = (2*p5.PI / braid.size);
+        // const mtheta = p5.atan2(p5.mouseY-cy, p5.mouseX-cx) + p5.PI - p5.PI / 2;
+        // const mradius = p5.dist(p5.mouseX, p5.mouseY, p5.width/2, p5.height/2)
+        for (var t = 0; t < braid.size; t++)
+        {
+            clicked[t] = false
+        //     const theta = layout[t].theta;
+        //     console.log(mtheta, theta, step*0.5)
+        //     // console.log(p5.abs(mtheta - theta), p5.abs(mradius - radius))
+        //     if (p5.abs(mtheta - theta) < step * 0.5 && p5.abs(mradius - radius) < 5)
+        //     {
+        //         // p5.stroke(0)
+        //         // p5.fill(0)
+        //         // p5.circle(layout.x, layout.y, 10)
+        //         clicked[t] = false;
+        //         break;
+        //     }
+        }
+    }
+};
+
+// Initialize all three canvases
+new p5(PatternSketch);
+new p5(DetailsSketch);
+new p5(ColorSketch);

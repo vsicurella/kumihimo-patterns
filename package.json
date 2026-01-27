@@ -1,0 +1,20 @@
+{
+    "name": "kumihimo-patterns",
+    "version": "1.0.0",
+    "description": "Kumihimo weaving patterns",
+    "main": "index.js",
+    "scripts": {
+        "start": "vite",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "kumihimo",
+        "weaving",
+        "patterns"
+    ],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "vite": "^7.3.1"
+    }
+}

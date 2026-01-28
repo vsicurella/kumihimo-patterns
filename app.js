@@ -73,6 +73,7 @@ class BraidControls
 {
     sketch;
 
+    DIV;
     CANVAS;
     PADDING;
 
@@ -80,52 +81,68 @@ class BraidControls
 
     colorDisk;
 
+    picker;
+
     labelScalar = 1.2;
-    radiusScalar = 0.16;
+    radiusScalar = 0.25;
 
     radius;
     cx;
     cy;
 
+    spots;  // Actual number of circle divisions (braid.size * 1.5)
     layout;
     clicked;
+
+    // recentColors = []
+    activeColor = ''
 
     constructor(braid)
     {
         this.braid = braid;
         this.layout = [];
+
+        // Setup color picker
+        this.DIV = document.getElementsByClassName('color-details')[0]
+        const colorPicker = document.createElement('DIV');
+        colorPicker.classList.add('picker');
+        colorPicker.id = 'color-picker'
+        colorPicker.setAttribute('acp-color', this.activeColor)
+        
+        this.picker = AColorPicker.createPicker(colorPicker)
+        this.picker.palette = this.getPaletteList();
+        this.picker.on('change', (picker, color) => this.activeColor = color)
+    }
+
+    constructCircle(p5)
+    {
+        this.radius = p5.height * this.radiusScalar;
+        this.cx = p5.width/2;
+        this.cy = p5.height/2
     }
 
     setSketch(p5)
     {
         this.sketch = p5;
         this.CANVAS = document.getElementById('color-controls-canvas')
-        console.log(this.CANVAS)
 
-        this.radius = p5.height * this.radiusScalar;
-        this.cx = p5.width/2;
-        this.cy = p5.height/2
+        this.DIV.appendChild(this.picker.element)
+        this.activeColor = braid.color(0);
 
         this.reset(this.sketch);
     }
 
     reset(p5)
     {
-        for (const l of this.layout)
-        {
-            if (l.picker)
-                l.picker.remove();
-        }
         this.layout = [];
 
-        // this.PADDING = parseInt(window.getComputedStyle(this.CANVAS.parentElement, null).getPropertyValue('padding'))
+        this.picker.palette = this.getPaletteList()
+        this.picker.setColor(this.braid.color(0))
 
-        this.radius = p5.height * this.radiusScalar;
-        this.cx = p5.width/2;
-        this.cy = p5.height/2
+        this.constructCircle(p5);
 
-        const spots = this.braid.size * 1.5;
-        const step = 2 * p5.PI / spots;
+        this.spots = this.braid.size * 1.5;
+        const step = 2 * p5.PI / this.spots;
         for (let t = 0; t < this.braid.size; t++)
         {
             const skip = Math.floor(t / 2);
@@ -134,20 +151,12 @@ class BraidControls
             const x = p5.cos(theta) * this.radius + this.cx;
             const y = p5.sin(theta) * this.radius + this.cy;
 
-            const picker = p5.createColorPicker(this.braid.color(t));
-            this.positionColorPicker(picker, x, y)
-            picker.elt.classList.add('circle-picker')
-            picker.elt.oninput = (el) => this.setColor(t, el.target.value)
-
-            // console.log(window.getComputedStyle(picker.elt, null))
-
             this.layout.push({ 
                 theta: theta, 
                 x: x, 
                 y: y,
                 xLabel: (x - this.cx) * this.labelScalar + this.cx,
                 yLabel: (y - this.cy) * this.labelScalar + this.cy,
-                picker: picker 
             });
         }
     }
@@ -171,17 +180,7 @@ class BraidControls
             l.y = y;
             l.xLabel = (x - this.cx) * this.labelScalar + this.cx;
             l.yLabel = (y - this.cy) * this.labelScalar + this.cy;
-            this.positionColorPicker(l.picker, x, y)
         }
-    }
-
-    positionColorPicker(picker, x, y)
-    {
-        // const size = parseInt(window.getComputedStyle(picker.elt, null).getPropertyValue('width'));
-        const size = 30;
-        // console.log(size)
-        const offset = Math.round(size / 2);
-        picker.position(this.CANVAS.offsetLeft + x - offset, this.CANVAS.offsetTop + y - offset)
     }
 
     savePalette()
@@ -195,16 +194,19 @@ class BraidControls
         braid.setPalette(newPalette);
         this.savePalette(this.sketch);
 
-        for (var t = 0; t < braid.size; t++)
-        {
-            this.layout[t].picker.elt.value = braid.color(t);
-        }
+        // for (var t = 0; t < braid.size; t++)
+        // {
+        //     this.layout[t].picker.elt.value = braid.color(t);
+        // }
+
+        this.picker.palette = this.getPaletteList();
     }
 
     setColor(index, color)
     {
         braid.set(index, color);
         this.sketch.storeItem(braidColorKey(index), color);
+        this.picker.palette = this.getPaletteList();
     }
 
     rotatePalette(steps)
@@ -212,6 +214,33 @@ class BraidControls
         const start = ((steps % braid.size) + braid.size) % braid.size;
         const newPalette = [...braid.palette.slice(start, braid.size), ...braid.palette.slice(0, start)];
         this.setPalette(newPalette);
+    }
+
+    getPaletteList()
+    {
+        const allColors = [...braid.palette ]//, ...this.recentColors];
+        const uniqueColors = allColors.filter((color, index, array) => array.indexOf(color) === index);
+        return uniqueColors;
+    }
+
+    getSwatchAt(x, y)
+    {
+        const p5 = this.sketch;
+        const step = (2*p5.PI / this.spots);
+        const th = (p5.atan2(y-this.cy, x-this.cx) + p5.PI * 2) % (2*p5.PI);
+        const rad = p5.dist(x, y, p5.width/2, p5.height/2)
+        for (var t = 0; t < braid.size; t++)
+        {
+            const theta = this.layout[t].theta;
+            // console.log(mtheta, theta, step*0.5)
+            // console.log(p5.abs(mtheta - theta), p5.abs(mradius - radius))
+            if (p5.abs(th - theta) < step * 0.33 && p5.abs(rad - this.radius) < 15)
+            {
+                return t;
+            }
+        }
+
+        return -1;
     }
 }
 
@@ -352,12 +381,12 @@ const DetailsSketch = (p5) => {
 
 const ColorSketch = (p5) => {
 
-    // let swatchRadius = 15;
+    circleAreaHeightScalar = 1/2;
 
     p5.setup = () => {
         const area = document.getElementsByClassName('color-details')[0];
-
-        const canvas = p5.createCanvas(area.clientWidth, area.clientHeight);
+        area.height = document.body.clientHeight * circleAreaHeightScalar;
+        const canvas = p5.createCanvas(area.clientWidth, area.height);
         canvas.parent(area);
         canvas.elt.id='color-controls-canvas'
 
@@ -392,14 +421,24 @@ const ColorSketch = (p5) => {
                 p5.stroke(0)
                 p5.fill(0,0,0,0);
             }
-
-            const x = braidControls.layout[t].xLabel;
-            const y = braidControls.layout[t].yLabel;
+            
+            const l = braidControls.layout[t];
+            
+            p5.circle(l.x, l.y, 25);
 
             p5.fill(0)
-            p5.text(t+1, x, y + 8)
+            p5.text(t+1, l.xLabel, l.yLabel + 8)
         }
     };
+
+    p5.mouseClicked = () =>
+    {
+        const swatch = braidControls.getSwatchAt(p5.mouseX, p5.mouseY);
+        if (swatch < 0)
+            return;
+
+        braidControls.setColor(swatch, braidControls.activeColor);
+    }
 };
 
 // Initialize all three canvases

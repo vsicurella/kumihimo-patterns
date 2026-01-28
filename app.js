@@ -265,10 +265,13 @@ const PatternSketch = (p5) => {
         let savedColors = []
         for (let t = 0; t < braid.size; t++)
         {
-            savedColors.push(p5.getItem(braidColorKey(t)));
+            let color = p5.getItem(braidColorKey(t));
+            if (color == null)
+                color = 0;
+            savedColors.push(color);
         }
 
-        braid.setPalette(savedColors);
+        braidControls.setPalette(savedColors);
     }
 
     p5.setup = () => {

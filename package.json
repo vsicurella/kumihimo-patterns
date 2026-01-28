@@ -4,7 +4,7 @@
     "description": "Kumihimo weaving patterns",
     "main": "index.js",
     "scripts": {
-        "start": "vite",
+        "start": "vite src",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [

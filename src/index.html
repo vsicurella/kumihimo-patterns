@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kumihimo Patterns</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
-    <script src=" https://cdn.jsdelivr.net/npm/a-color-picker@1.2.1/dist/acolorpicker.min.js "></script>
+    <script src="https://cdn.jsdelivr.net/npm/a-color-picker@1.2.1/dist/acolorpicker.min.js "></script>
+    <script src="./state.js"></script>
+    <script src="./braid.js"></script>
+    <script src="./controls.js"></script>
     <style>
         body {
             margin: 0;
@@ -73,12 +76,11 @@
                 <br>
                 <label for="num-threads-input"># Threads:</label>
                 <input id="num-threads-input" type="number" min=8 max=32 step=2 value='16'/>
-                <button id="move-left" onclick="rotateColorsCounterClockwise()">&lt;</button>
-                <button id="move-right" onclick="rotateColorsClockwise()">&gt;</button>
+                <button id="move-left" onclick="app.rotateColorsCounterClockwise()">&lt;</button>
+                <button id="move-right" onclick="app.rotateColorsClockwise()">&gt;</button>
             </div>
         </div>
     </div>
-
-<script src="app.js"></script>
+    <script src="./app.js"></script>
 </body>
 </html>

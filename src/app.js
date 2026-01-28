@@ -37,6 +37,13 @@ class BraidDesigner extends BraidControls
         this.rotatePalette(1);
     }
 
+    paintAllThreads()
+    {
+        console.log(this.currentColor)
+        const newPalette = this.braid.palette.map(() => this.currentColor);
+        this.setPalette(newPalette)
+    }
+
 }
 
 const app = new BraidDesigner();
@@ -207,7 +214,7 @@ const ColorSketch = (p5) => {
         if (swatch < 0)
             return;
 
-        app.setColor(swatch, app.activeColor);
+        app.setColor(swatch, app.currentColor);
     }
 };
 

@@ -24,7 +24,7 @@ class BraidControls
     layout;
 
     // recentColors = []
-    activeColor = ''
+    currentColor = ''
 
     constructor(braid)
     {
@@ -36,11 +36,11 @@ class BraidControls
         const colorPicker = document.createElement('DIV');
         colorPicker.classList.add('picker');
         colorPicker.id = 'color-picker'
-        colorPicker.setAttribute('acp-color', this.activeColor)
+        colorPicker.setAttribute('acp-color', this.currentColor)
         
         this.picker = AColorPicker.createPicker(colorPicker)
         this.picker.palette = this.getPaletteList();
-        this.picker.on('change', (picker, color) => this.activeColor = color)
+        this.picker.on('change', (picker, color) => this.currentColor = color)
     }
 
     constructCircle(p5)
@@ -56,7 +56,7 @@ class BraidControls
         this.CANVAS = document.getElementById('color-controls-canvas')
 
         this.DIV.appendChild(this.picker.element)
-        this.activeColor = this.braid.color(0);
+        this.currentColor = this.braid.color(0);
 
         this.reset(this.sketch);
     }

@@ -31,16 +31,8 @@ class BraidControls
         this.braid = braid;
         this.layout = [];
 
-        // Setup color picker
         this.DIV = document.getElementsByClassName('color-details')[0]
-        const colorPicker = document.createElement('DIV');
-        colorPicker.classList.add('picker');
-        colorPicker.id = 'color-picker'
-        colorPicker.setAttribute('acp-color', this.currentColor)
         
-        this.picker = AColorPicker.createPicker(colorPicker)
-        this.picker.palette = this.getPaletteList();
-        this.picker.on('change', (picker, color) => this.currentColor = color)
     }
 
     constructCircle(p5)
@@ -55,7 +47,6 @@ class BraidControls
         this.sketch = p5;
         this.CANVAS = document.getElementById('color-controls-canvas')
 
-        this.DIV.appendChild(this.picker.element)
         this.currentColor = this.braid.color(0);
 
         this.reset(this.sketch);
@@ -66,7 +57,7 @@ class BraidControls
         this.layout = [];
 
         this.picker.palette = this.getPaletteList()
-        this.picker.setColor(this.braid.color(0))
+        this.picker.color = this.braid.color(0)
 
         this.constructCircle(p5);
 
@@ -114,14 +105,16 @@ class BraidControls
 
     savePalette()
     {
-        for (var t = 0; t < this.size; t++)
+        for (var t = 0; t < this.braid.size; t++)
             this.sketch.storeItem(braidColorKey(t), this.braid.color(t));
     }
 
     setPalette(newPalette)
     {
         this.braid.setPalette(newPalette);
-        this.savePalette(this.sketch);
+
+        if (this.sketch)
+            this.savePalette(this.sketch);
 
         // for (var t = 0; t < braid.size; t++)
         // {

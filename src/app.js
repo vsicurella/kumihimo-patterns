@@ -10,11 +10,12 @@ class BraidDesigner extends BraidControls
 {
     currentPattern = PATTERNS.NaikiGumi;
 
-    constructor(braid=null)
+    constructor()
     {
-        if (braid == null)
-            braid = new Braid(16);
-        super(braid)
+        super(new Braid(16))
+
+        this.picker = AColorPicker.from(".picker");
+        this.picker.on('change', (picker, color) => this.currentColor = color)
     }
 
     numThreads()
@@ -45,8 +46,6 @@ class BraidDesigner extends BraidControls
     }
 
 }
-
-const app = new BraidDesigner();
 
 const PatternSketch = (p5) => {
 
@@ -161,8 +160,8 @@ const ColorSketch = (p5) => {
 
     p5.setup = () => {
         const area = document.getElementsByClassName('color-details')[0];
-        area.height = document.body.clientHeight * circleAreaHeightScalar;
-        const canvas = p5.createCanvas(area.clientWidth, area.height);
+        // area.height = document.body.clientHeight * circleAreaHeightScalar;
+        const canvas = p5.createCanvas(area.clientWidth / 2, area.clientHeight);
         canvas.parent(area);
         canvas.elt.id='color-controls-canvas'
 
@@ -217,6 +216,10 @@ const ColorSketch = (p5) => {
         app.setColor(swatch, app.currentColor);
     }
 };
+
+// APP INIT
+
+const app = new BraidDesigner();
 
 // Initialize all three canvases
 let patternSketch = new p5(PatternSketch);

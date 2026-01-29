@@ -6,6 +6,22 @@ function contrastingColor(p5, color)
     
 }
 
+function getHexPoints(rx, ry, phase=0)
+{
+    const points = [];
+    const step = 2*Math.PI/6;
+    for (var n = 0; n < 6; n++)
+    {
+        const theta = step * n + phase;
+        points.push(
+        {
+            x: Math.cos(theta) * rx,
+            y: Math.sin(theta) * ry
+        });
+    }
+    return points;
+}
+
 class BraidDesigner extends BraidControls
 {
     currentPattern = PATTERNS.NaikiGumi;
@@ -54,6 +70,13 @@ class BraidDesigner extends BraidControls
 
 const PatternSketch = (p5) => {
 
+    hexPoints = null;
+
+    style = null;
+    styleParity = 1;
+    unitSize = 15;
+    patternStyle = 'hex';
+
     resetPattern = () => {
         let savedColors = []
         for (let t = 0; t < app.numThreads(); t++)
@@ -78,26 +101,45 @@ const PatternSketch = (p5) => {
     };
 
     p5.draw = () => {
-        p5.textAlign(p5.CENTER)
+        p5.background('#f0f0f0')
 
-        let style = null;
-        let styleParity = 1;
-        let unitWidth = 15;
-        let unitHeight = 20;
+        p5.textAlign(p5.CENTER)
 
         switch (app.currentPattern)
         {
         case PATTERNS.NaikiGumi:
             style = 'plain-weave'
             styleParity = 1;
+            patternStyle = 'rhombus'
             break;
         case PATTERNS.NaikiGaeshi:
             style = 'plain-weave'
             styleParity = 2;
+            patternStyle = 'hex'
             break;
         default:
             p5.text("Unknown pattern: " + app.currentPattern, p5.width/2, p5.height/2);
             return;
+        }
+
+        let unitWidth = unitSize;
+        let unitHeight = unitSize;
+        let tx = 1;
+        let ty = 1;
+
+        switch (patternStyle)
+        {
+        case 'square':
+            break;
+        case 'rhombus':
+            unitHeight = unitSize * 8 / 5;
+            break;
+        case 'hex':
+            unitHeight = unitSize * 9 / 8;
+            hexPoints = getHexPoints(unitWidth, unitHeight, Math.PI/6);
+            tx = Math.sqrt(3)/2;
+            ty = 1.5;
+            break;
         }
         
         switch (style)
@@ -106,10 +148,15 @@ const PatternSketch = (p5) => {
 
             // basic cross stitch pattern, squares rotated by 45 degrees
 
-            const patternWidth = unitWidth * (app.numThreads() + 0.5);
-            const patternHeight = unitHeight * (app.numThreads() * 2);
+            let patternWidth = unitWidth * (app.numThreads() + 0.5);
+            let patternHeight = unitHeight * (app.numThreads() * 2);
 
-            const origin = { x: p5.abs(p5.width - patternWidth) * 0.5, y: p5.abs(p5.height - patternHeight) * 0.5};
+            if (patternStyle == 'hex')
+            {
+                patternWidth = unitWidth * Math.sqrt(3)/2 * (app.numThreads() + 0.5)
+            }
+
+            const origin = { x: p5.abs(p5.width - patternWidth) * 0.5, y: 20 };
 
             for (let row = 0; row <= app.numThreads(); row++)
             {
@@ -125,8 +172,8 @@ const PatternSketch = (p5) => {
                         thread = ((row - 1) * styleParity + 2 * col + 1) % app.numThreads()
                     }
 
-                    const centerX = origin.x + unitWidth * (col * 2 + 1 + p5.pow(0, row % 2));
-                    const centerY = origin.y + unitHeight * (row + 1);
+                    const centerX = origin.x + tx * unitWidth * (col * 2 + 1 + p5.pow(0, row % 2));
+                    const centerY = origin.y + ty * unitHeight * (row + 1);
 
                     // square version
                     let color = 'rgb(0,0,0,0)';
@@ -135,10 +182,26 @@ const PatternSketch = (p5) => {
                     p5.fill(color)
                     
                     p5.beginShape()
-                    p5.vertex(centerX - unitWidth, centerY)
-                    p5.vertex(centerX, centerY - unitHeight)
-                    p5.vertex(centerX + unitWidth, centerY)
-                    p5.vertex(centerX, centerY + unitHeight)
+
+
+                    switch (patternStyle)
+                    {
+                    case 'square':
+                    case 'rhombus':
+                    default:
+                        p5.vertex(centerX - unitWidth, centerY)
+                        p5.vertex(centerX, centerY - unitHeight)
+                        p5.vertex(centerX + unitWidth, centerY)
+                        p5.vertex(centerX, centerY + unitHeight)
+                        break;
+                    case 'hex':
+                        for (const p of hexPoints)
+                        {
+                            p5.vertex(centerX + p.x, centerY + p.y);
+                        }
+                        break;
+                    }
+                    
                     p5.endShape(p5.CLOSE)
 
                     let textColor = contrastingColor(p5,color);

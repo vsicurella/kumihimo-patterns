@@ -26,6 +26,9 @@ class BraidDesigner extends BraidControls
 {
     currentPattern = PATTERNS.NaikiGumi;
 
+    edits = [];
+    redoIndex = -1
+
     constructor()
     {
         super(new Braid(16))
@@ -33,6 +36,21 @@ class BraidDesigner extends BraidControls
         const colorPicker = document.getElementById("color-picker");
         this.picker = AColorPicker.createPicker(colorPicker, { showRGB: true, showHSL: false });
         this.picker.on('change', (picker, color) => this.currentColor = color)
+    }
+
+    _add_undoable_edit_(edit)
+    {
+        this.edits.splice(0, this.redoIndex, edit);
+        this.redoIndex = 0;
+    }
+
+    resetCanvases()
+    {
+        patternSketch.remove();
+        patternSketch = new p5(PatternSketch);
+
+        colorSketch.remove();
+        colorSketch = new p5(ColorSketch)
     }
 
     numThreads()
@@ -45,25 +63,95 @@ class BraidDesigner extends BraidControls
         return this.braid.color(index);
     }
 
+    setTechnique(technique)
+    {
+        app.currentPattern = technique;
+    }
+
+    setNumThreads(num)
+    {
+        console.log('setNumThreads')
+        const previous = app.braid.size;
+        app.braid = new Braid(num);
+
+        this.resetCanvases();
+
+        this._add_undoable_edit_(Edit.SetNumThreads(num, previous));
+    }
+
+    setThreadColor(thread, color)
+    {
+        const oldColor = this.braid.color(thread);
+        this.setColor(thread, color);
+        this._add_undoable_edit_(Edit.SetColor(thread, color, oldColor));
+    }
+
     rotateColorsClockwise()
     {
         this.rotatePalette(-1);
+        this._add_undoable_edit_(Edit.RotateColors(-1));
     }
 
     rotateColorsCounterClockwise()
     {
         this.rotatePalette(1);
+        this._add_undoable_edit_(Edit.RotateColors(1));
     }
 
     paintAllThreads()
     {
+        const currentPalette = [...this.braid.palette];
         const newPalette = this.braid.palette.map(() => this.currentColor);
         this.setPalette(newPalette)
+        this._add_undoable_edit_(Edit.SetPalette(newPalette, currentPalette));
     }
 
     toggleThreadNums()
     {
         this.showThreadNums = !this.showThreadNums;
+    }
+
+    undo()
+    {
+        if (this.edits.length == 0 || this.redoIndex >= this.edits.length)
+            return;
+
+        const toUndo = this.edits[this.redoIndex];
+        this._perform_edit_(toUndo.type, toUndo.oldValue);
+        this.redoIndex++;
+    }
+
+    redo()
+    {
+        if (this.edits.length == 0 || this.redoIndex <= 0)
+            return;
+
+        const toRedo = this.edits[this.redoIndex - 1];
+        this._perform_edit_(toRedo.type, toRedo.newValue);
+        this.redoIndex--;
+    }
+
+    _perform_edit_(editType, value)
+    {
+        switch (editType)
+        {
+        case EditType.SetColor:
+            this.setColor(value.thread, value.color)
+            break;
+        case EditType.RotateColors:
+            this.rotatePalette(value)
+            break;
+        case EditType.SetNumThreads:
+            app.braid = new Braid(value);
+            this.resetCanvases();
+            numThreadsInput.value = value;
+            break;
+        case EditType.SetPalette:
+            this.setPalette(value)
+            break;
+        default:
+            throw new Error("Unknown edit: " + editType, value);
+        }
     }
 }
 
@@ -281,7 +369,7 @@ const ColorSketch = (p5) => {
         if (swatch < 0)
             return;
 
-        app.setColor(swatch, app.currentColor);
+        app.setThreadColor(swatch, app.currentColor);
     }
 };
 
@@ -307,19 +395,12 @@ for (const key in PATTERNS)
 // Setup callbacks
 patternSelector.onchange = () =>
 {
-    app.currentPattern = patternSelector.value;
+    app.setTechnique(patternSelector.value);
 }
 
 const numThreadsInput = document.getElementById('num-threads-input');
 numThreadsInput.onchange = () =>
 {
     const threads = parseInt(numThreadsInput.value)
-    // console.log('Set to ', threads);
-    app.braid = new Braid(threads);
-
-    patternSketch.remove();
-    patternSketch = new p5(PatternSketch);
-
-    colorSketch.remove();
-    colorSketch = new p5(ColorSketch)
+    app.setNumThreads(threads)
 }

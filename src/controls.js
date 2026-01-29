@@ -139,7 +139,6 @@ class BraidControls
     {
         const allColors = [...this.braid.palette ]
         const uniqueColors = allColors.filter((color, index, array) => array.indexOf(color) === index);
-        console.log(uniqueColors)
         return uniqueColors;
     }
 

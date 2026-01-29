@@ -60,7 +60,7 @@
         <div class="controls">
             <div class="parameters">
                 <label for="pattern-select">Pattern:</label>
-                <select id="pattern-select"></select>
+                <select id="pattern-select" onchange="setTechniqueCallback"></select>
                 <br>
                 <label for="num-threads-input"># Threads:</label>
                 <input id="num-threads-input" type="number" min=8 max=32 step=2 value='16'/>
@@ -69,6 +69,9 @@
                 <br>
                 <button id="paint-all" onclick="app.paintAllThreads()">Paint All</button>
                 <input type="checkbox" onchange="app.toggleThreadNums()">Show Thread Nums
+                <br>
+                <button id="undo-btn" onclick="app.undo()">undo</button>
+                <button id="redo-btn" onclick="app.redo()">redo</button>
                 <br>
                 <div id="color-picker" class="picker"></div>
             </div>

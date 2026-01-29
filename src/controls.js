@@ -1,17 +1,17 @@
 
 class BraidControls
 {
+    // business
     sketch;
 
     DIV;
     CANVAS;
     PADDING;
 
-    braid;
-
-    colorDisk;
-
     picker;
+    
+    // data
+    braid;
 
     labelScalar = 1.2;
     radiusScalar = 0.25;
@@ -23,6 +23,9 @@ class BraidControls
     spots;  // Actual number of circle divisions (braid.size * 1.5)
     layout;
 
+    // params
+    showThreadNums;
+
     // recentColors = []
     currentColor = ''
 
@@ -31,15 +34,14 @@ class BraidControls
         this.braid = braid;
         this.layout = [];
 
-        this.DIV = document.getElementsByClassName('color-details')[0]
-        
+        this.DIV = document.getElementsByClassName('color-details')[0]   
     }
 
     constructCircle(p5)
     {
         this.radius = p5.height * this.radiusScalar;
         this.cx = p5.width/2;
-        this.cy = p5.height/2
+        this.cy = p5.height/3
     }
 
     setSketch(p5)
@@ -116,12 +118,7 @@ class BraidControls
         if (this.sketch)
             this.savePalette(this.sketch);
 
-        // for (var t = 0; t < braid.size; t++)
-        // {
-        //     this.layout[t].picker.elt.value = braid.color(t);
-        // }
-
-        this.picker.palette = this.getPaletteList();
+        this.picker.palette = this.getPaletteList()
     }
 
     setColor(index, color)
@@ -140,8 +137,9 @@ class BraidControls
 
     getPaletteList()
     {
-        const allColors = [...this.braid.palette ]//, ...this.recentColors];
+        const allColors = [...this.braid.palette ]
         const uniqueColors = allColors.filter((color, index, array) => array.indexOf(color) === index);
+        console.log(uniqueColors)
         return uniqueColors;
     }
 
@@ -150,12 +148,10 @@ class BraidControls
         const p5 = this.sketch;
         const step = (2*p5.PI / this.spots);
         const th = (p5.atan2(y-this.cy, x-this.cx) + p5.PI * 2) % (2*p5.PI);
-        const rad = p5.dist(x, y, p5.width/2, p5.height/2)
+        const rad = p5.dist(x, y, this.cx, this.cy)
         for (var t = 0; t < this.braid.size; t++)
         {
             const theta = this.layout[t].theta;
-            // console.log(mtheta, theta, step*0.5)
-            // console.log(p5.abs(mtheta - theta), p5.abs(mradius - radius))
             if (p5.abs(th - theta) < step * 0.33 && p5.abs(rad - this.radius) < 15)
             {
                 return t;

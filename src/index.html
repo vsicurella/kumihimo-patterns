@@ -31,14 +31,26 @@
         .controls {
             flex: 1;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 20px;
             background-color: #f0f0f0;
             border-radius: 8px;
             padding: 20px;
         }
         .parameters {
-            max-width: 33%;
+            flex: 0 0 30%;
+            /* display: flex; */
+            flex-direction: column;
+            gap: 10px;
+        }
+        .color-details {
+            flex: 1;
+            background-color: f0f0f0;
+            border-radius: 8px;
+            padding: 0;
+        }
+        .picker {
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -56,6 +68,7 @@
                 <button id="move-right" onclick="app.rotateColorsClockwise()">&gt;</button>
                 <br>
                 <button id="paint-all" onclick="app.paintAllThreads()">Paint All</button>
+                <input type="checkbox" onchange="app.toggleThreadNums()">Show Thread Nums
                 <br>
                 <div id="color-picker" class="picker"></div>
             </div>

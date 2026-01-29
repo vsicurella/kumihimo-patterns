@@ -14,7 +14,9 @@ class BraidDesigner extends BraidControls
     {
         super(new Braid(16))
 
-        this.picker = AColorPicker.from(".picker");
+        const colorPicker = document.getElementById("color-picker");
+        this.picker = AColorPicker.createPicker(colorPicker);
+
         this.picker.on('change', (picker, color) => this.currentColor = color)
     }
 
@@ -40,11 +42,14 @@ class BraidDesigner extends BraidControls
 
     paintAllThreads()
     {
-        console.log(this.currentColor)
         const newPalette = this.braid.palette.map(() => this.currentColor);
         this.setPalette(newPalette)
     }
 
+    toggleThreadNums()
+    {
+        this.showThreadNums = !this.showThreadNums;
+    }
 }
 
 const PatternSketch = (p5) => {
@@ -139,6 +144,7 @@ const PatternSketch = (p5) => {
                     p5.fill(textColor)
                     
                     // p5.text(`${row}`, centerX, centerY);
+                    if (app.showThreadNums)
                         p5.text(`${thread+1}`, centerX, centerY);
 
                 }
@@ -160,8 +166,7 @@ const ColorSketch = (p5) => {
 
     p5.setup = () => {
         const area = document.getElementsByClassName('color-details')[0];
-        // area.height = document.body.clientHeight * circleAreaHeightScalar;
-        const canvas = p5.createCanvas(area.clientWidth / 2, area.clientHeight);
+        const canvas = p5.createCanvas(area.clientWidth, area.clientHeight);
         canvas.parent(area);
         canvas.elt.id='color-controls-canvas'
 

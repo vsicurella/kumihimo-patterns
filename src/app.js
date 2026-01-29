@@ -31,8 +31,7 @@ class BraidDesigner extends BraidControls
         super(new Braid(16))
 
         const colorPicker = document.getElementById("color-picker");
-        this.picker = AColorPicker.createPicker(colorPicker);
-
+        this.picker = AColorPicker.createPicker(colorPicker, { showRGB: true, showHSL: false });
         this.picker.on('change', (picker, color) => this.currentColor = color)
     }
 

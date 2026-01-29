@@ -82,6 +82,8 @@ const PatternSketch = (p5) => {
 
         let style = null;
         let styleParity = 1;
+        let unitWidth = 15;
+        let unitHeight = 20;
 
         switch (app.currentPattern)
         {
@@ -103,10 +105,9 @@ const PatternSketch = (p5) => {
         case 'plain-weave':
 
             // basic cross stitch pattern, squares rotated by 45 degrees
-            const size = 20;
 
-            const patternWidth = size * (app.numThreads() + 0.5);
-            const patternHeight = size * (app.numThreads() * 2);
+            const patternWidth = unitWidth * (app.numThreads() + 0.5);
+            const patternHeight = unitHeight * (app.numThreads() * 2);
 
             const origin = { x: p5.abs(p5.width - patternWidth) * 0.5, y: p5.abs(p5.height - patternHeight) * 0.5};
 
@@ -124,8 +125,8 @@ const PatternSketch = (p5) => {
                         thread = ((row - 1) * styleParity + 2 * col + 1) % app.numThreads()
                     }
 
-                    const centerX = origin.x + size * (col * 2 + 1 + p5.pow(0, row % 2));
-                    const centerY = origin.y + size * (row + 1);
+                    const centerX = origin.x + unitWidth * (col * 2 + 1 + p5.pow(0, row % 2));
+                    const centerY = origin.y + unitHeight * (row + 1);
 
                     // square version
                     let color = 'rgb(0,0,0,0)';
@@ -134,10 +135,10 @@ const PatternSketch = (p5) => {
                     p5.fill(color)
                     
                     p5.beginShape()
-                    p5.vertex(centerX - size, centerY)
-                    p5.vertex(centerX, centerY - size)
-                    p5.vertex(centerX + size, centerY)
-                    p5.vertex(centerX, centerY + size)
+                    p5.vertex(centerX - unitWidth, centerY)
+                    p5.vertex(centerX, centerY - unitHeight)
+                    p5.vertex(centerX + unitWidth, centerY)
+                    p5.vertex(centerX, centerY + unitHeight)
                     p5.endShape(p5.CLOSE)
 
                     let textColor = contrastingColor(p5,color);

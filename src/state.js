@@ -6,6 +6,7 @@ function braidColorKey(index)
 
 const PATTERNS =
 {
+    KongoGumi: "Kongo Gumi",
     NaikiGumi: "Naiki Gumi",
     NaikiGaeshi: "Naiki Gaeshi"
 }

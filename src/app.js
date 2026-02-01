@@ -22,6 +22,11 @@ function getHexPoints(rx, ry, phase=0)
     return points;
 }
 
+function updateThreadsInput(value)
+{
+    numThreadsInput.value = value;
+}
+
 class BraidDesigner extends BraidControls
 {
     currentPattern = PATTERNS.NaikiGumi;
@@ -66,13 +71,34 @@ class BraidDesigner extends BraidControls
     setTechnique(technique)
     {
         app.currentPattern = technique;
+
+        const threadNumInput = document.getElementById('num-threads-input');
+        if (technique === PATTERNS.KongoGumi)
+        {
+            // make sure controls are restricted
+            if ((app.numThreads() / 2) % 2 == 1)
+            {
+                this.setNumThreads(app.numThreads() - 2);
+                threadNumInput.value = app.numThreads();
+            }
+
+            threadNumInput.step = 4;
+        }
+        else
+        {
+            threadNumInput.step = 2;
+        }
     }
 
     setNumThreads(num)
     {
-        console.log('setNumThreads')
+        if (app.braid.size === num)
+            return;
+
         const previous = app.braid.size;
         app.braid = new Braid(num);
+
+        this.sketch.storeItem('kumihimo-num-threads', num);
 
         this.resetCanvases();
 
@@ -144,7 +170,7 @@ class BraidDesigner extends BraidControls
         case EditType.SetNumThreads:
             app.braid = new Braid(value);
             this.resetCanvases();
-            numThreadsInput.value = value;
+            updateThreadsInput(app.braid.size);
             break;
         case EditType.SetPalette:
             this.setPalette(value)
@@ -163,6 +189,8 @@ const PatternSketch = (p5) => {
     styleParity = 1;
     unitSize = 15;
     patternStyle = 'hex';
+
+    times = 0
 
     resetPattern = () => {
         let savedColors = []
@@ -194,6 +222,10 @@ const PatternSketch = (p5) => {
 
         switch (app.currentPattern)
         {
+        case PATTERNS.KongoGumi:
+            style = 'kongo-gumi'
+            patternStyle = 'hex'
+            break;
         case PATTERNS.NaikiGumi:
             style = 'plain-weave'
             styleParity = 1;
@@ -219,7 +251,7 @@ const PatternSketch = (p5) => {
         case 'square':
             break;
         case 'rhombus':
-            unitHeight = unitSize * 8 / 5;
+            unitHeight = unitSize * 3 / 2;
             break;
         case 'hex':
             unitHeight = unitSize * 9 / 8;
@@ -228,28 +260,91 @@ const PatternSketch = (p5) => {
             ty = 1.5;
             break;
         }
-        
-        switch (style)
+
+        let patternWidth = unitWidth * (app.numThreads() + 0.5);
+        let patternHeight = unitHeight * (app.numThreads() * 2);
+
+        if (patternStyle == 'hex')
         {
-        case 'plain-weave':
+            patternWidth = unitWidth * Math.sqrt(3)/2 * (app.numThreads() + 0.5)
+        }
+        const origin = { x: p5.abs(p5.width - patternWidth) * 0.5, y: 20 };
 
-            // basic cross stitch pattern, squares rotated by 45 degrees
+        const numRows = app.numThreads();
+        const numCols = app.numThreads() / 2;
 
-            let patternWidth = unitWidth * (app.numThreads() + 0.5);
-            let patternHeight = unitHeight * (app.numThreads() * 2);
+        const kgEvens = app.numThreads()/2 + 3;
+        const kgOdds = -1;
 
-            if (patternStyle == 'hex')
+        const halfThreads = app.numThreads() / 2;
+
+        let kgSequence = [];
+        let kgMap = {};
+        if (style == 'kongo-gumi')
+        {
+            offset = 2;
+            
+            const fourth = app.numThreads() / 4;
+            const half = app.numThreads() / 2;
+            for (var n = 0; n < app.numThreads(); n++)
             {
-                patternWidth = unitWidth * Math.sqrt(3)/2 * (app.numThreads() + 0.5)
+                kgSequence.push(
+                    (n % fourth) * 2 + Math.floor(n/fourth) % 2 + Math.floor(n/half)*half
+                );
+                kgMap[kgSequence[n]] = n;
             }
-
-            const origin = { x: p5.abs(p5.width - patternWidth) * 0.5, y: 20 };
-
-            for (let row = 0; row <= app.numThreads(); row++)
+            if (times < 1)
             {
-                for (let col = 0; col < app.numThreads() / 2; col++)
+                console.log(kgOdds, kgEvens);
+                console.log(kgSequence.map(x=>x+1))
+                console.log(kgMap)
+            }
+        }
+        
+
+        for (let row = 0; row <= numRows; row++)
+        {
+            for (let col = 0; col < numCols; col++)
+            {
+                const centerX = origin.x + tx * unitWidth * (col * 2 + 1 + p5.pow(0, row % 2));
+                const centerY = origin.y + ty * unitHeight * (row + 1);
+
+                let thread = -1;
+                let start = -1;
+                const numCycles = Math.floor(row/(app.numThreads()*2));
+                const numQuarterCycles = Math.floor(row/(app.numThreads()/2));
+                switch (style)
                 {
-                    let thread = -1;
+                case 'kongo-gumi':
+                {
+                    if (numQuarterCycles % 2 == 0)
+                    {
+                        start = 1 + Math.floor((row+1)/2) * kgOdds 
+                                  + Math.floor(row/2) * kgEvens 
+                    }
+                    else
+                    {
+                        start = Math.floor(row/2) 
+                              + Math.floor((row+1)/2) * (halfThreads+1) 
+                              - Math.floor(numCycles/2);
+                    }
+
+                    if (Math.floor(numQuarterCycles/2) % 2 == 1)
+                    {
+                        start += halfThreads;
+                    }
+
+                    start = start % app.numThreads();
+
+                    const startMap = kgMap[start % app.numThreads()];
+                    const index = (startMap + col) % app.numThreads();
+                    thread = kgSequence[index];
+
+                    break;
+                }
+                case 'plain-weave':
+                {
+                    // basic cross stitch pattern, squares rotated by 45 degrees
                     if (row % 2 == 0) // evens (shown as odds)
                     {
                         thread = ((app.numThreads() * styleParity) - row * styleParity + 2 * col) % app.numThreads()
@@ -258,56 +353,71 @@ const PatternSketch = (p5) => {
                     {
                         thread = ((row - 1) * styleParity + 2 * col + 1) % app.numThreads()
                     }
-
-                    const centerX = origin.x + tx * unitWidth * (col * 2 + 1 + p5.pow(0, row % 2));
-                    const centerY = origin.y + ty * unitHeight * (row + 1);
-
-                    // square version
-                    let color = 'rgb(0,0,0,0)';
-                    if (app.getPaletteColor(thread))
-                        color = app.getPaletteColor(thread);
-                    p5.fill(color)
-                    
-                    p5.beginShape()
-
-
-                    switch (patternStyle)
-                    {
-                    case 'square':
-                    case 'rhombus':
-                    default:
-                        p5.vertex(centerX - unitWidth, centerY)
-                        p5.vertex(centerX, centerY - unitHeight)
-                        p5.vertex(centerX + unitWidth, centerY)
-                        p5.vertex(centerX, centerY + unitHeight)
-                        break;
-                    case 'hex':
-                        for (const p of hexPoints)
-                        {
-                            p5.vertex(centerX + p.x, centerY + p.y);
-                        }
-                        break;
-                    }
-                    
-                    p5.endShape(p5.CLOSE)
-
-                    let textColor = contrastingColor(p5,color);
-                    p5.fill(textColor)
-                    
-                    // p5.text(`${row}`, centerX, centerY);
-                    if (app.showThreadNums)
-                        p5.text(`${thread+1}`, centerX, centerY);
-
                 }
+                break;
+
+                default:
+                    p5.text("Pattern not implemented", p5.width/2,p5.height/2)
+                    return;
+                }
+
+                let text = thread + 1;
+                // text = numCycles
+                // text = (Math.floor((row+1)/2) * kgodds) % 16;
+                // text = (Math.floor(row/2) * kgevens) % 16
+                // text = (numCycles * 2 * (1 - row % 2));
+                // text = (numCycles * numCols * (row % 2));
+                // text = cycleOffset
+
+                // if (times === 0)
+                // {
+                //     console.log({
+                //         row: row,
+                //         col: col,
+                //         thread: thread,
+                //         start: start,
+                //         numCycles: numCycles,
+                //         cycleOffset: cycleOffset,
+                //     })
+                // }
+
+                let color = 'rgb(0,0,0,0)';
+                if (app.getPaletteColor(thread))
+                    color = app.getPaletteColor(thread);
+                p5.fill(color)
+                
+                p5.beginShape()
+
+                switch (patternStyle)
+                {
+                case 'square':
+                case 'rhombus':
+                default:
+                    p5.vertex(centerX - unitWidth, centerY)
+                    p5.vertex(centerX, centerY - unitHeight)
+                    p5.vertex(centerX + unitWidth, centerY)
+                    p5.vertex(centerX, centerY + unitHeight)
+                    break;
+                case 'hex':
+                    for (const p of hexPoints)
+                    {
+                        p5.vertex(centerX + p.x, centerY + p.y);
+                    }
+                    break;
+                }
+                
+                p5.endShape(p5.CLOSE)
+
+                let textColor = contrastingColor(p5,color);
+                p5.fill(textColor)
+                
+                // p5.text(`${row}`, centerX, centerY);
+                if (app.showThreadNums)
+                    p5.text(text, centerX, centerY);
             }
-
-
-            break;
-
-        default:
-            p5.text("Pattern not implemented", p5.width/2,p5.height/2)
-            break;
         }
+        times++
+
     };
 };
 
@@ -376,6 +486,7 @@ const ColorSketch = (p5) => {
 // APP INIT
 
 const app = new BraidDesigner();
+app.setTechnique(PATTERNS.KongoGumi);
 
 // Initialize all three canvases
 let patternSketch = new p5(PatternSketch);
@@ -404,3 +515,4 @@ numThreadsInput.onchange = () =>
     const threads = parseInt(numThreadsInput.value)
     app.setNumThreads(threads)
 }
+

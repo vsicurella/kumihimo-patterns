@@ -51,6 +51,11 @@ class BraidControls
 
         this.currentColor = this.braid.color(0);
 
+        let numThreads = this.sketch.getItem('kumihimo-num-threads')
+        console.log('numthreads:',numThreads)
+        app.setNumThreads(numThreads);
+        updateThreadsInput(numThreads)
+
         this.reset(this.sketch);
     }
 

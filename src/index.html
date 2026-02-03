@@ -52,6 +52,9 @@
         .picker {
             margin-top: 15px;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -72,10 +75,17 @@
                 <br>
                 <button id="undo-btn" onclick="app.undo()">undo</button>
                 <button id="redo-btn" onclick="app.redo()">redo</button>
+                <button id="load-btn" onclick="app.load()">load</button>
+                <button id="save-btn" onclick="app.save()">save</button>
+                <p id="load-file-message"></p>
                 <br>
                 <div id="color-picker" class="picker"></div>
             </div>
             <div class="color-details"></div>
+        </div>
+        <div class="hidden">
+            <input id='load-file' type="file">
+            <a id="save-file" download="kumihimo-pattern.json"></a>
         </div>
     </div>
     <script src="./app.js"></script>

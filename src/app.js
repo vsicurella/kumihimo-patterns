@@ -179,6 +179,68 @@ class BraidDesigner extends BraidControls
             throw new Error("Unknown edit: " + editType, value);
         }
     }
+
+    loadState(state)
+    {
+        this.setPalette(state.palette)
+        this.setNumThreads(state.numThreads)
+    }
+
+    loadFile(name, blob)
+    {
+        // console.log('loadFile', name, blob)
+        const reader = new FileReader();
+        reader.readAsText(blob);
+        reader.onerror = () => {
+            const msg = document.getElementById('load-file-message');
+            msg.innerText = 'Error opening file, unknown issue.';
+            }
+        reader.onload = () =>
+            {
+            const msg = document.getElementById('load-file-message');
+
+            try {
+                const state = JSON.parse(reader.result);
+                this.loadState(state)
+                msg.innerText = 'Loaded ' + name;
+                }
+            catch (err)
+                {
+                msg.innerText = 'Error loading file, wrong type or corrupted.';
+                }
+            }
+    }
+
+    load()
+    {
+        const fileInput = document.getElementById('load-file');
+        fileInput.oninput = (ev) => this.loadFile(
+            ev.target.value, ev.target.files[0]
+        )
+        fileInput.click();
+    }
+
+    saveStateToFile(name, state)
+    {
+        const data = JSON.stringify(state);
+        const blob = new Blob([data], { type: 'application/json' })
+        const url = URL.createObjectURL(blob);
+        
+        const download = document.getElementById('save-file');
+        download.href = url;
+        download.click();
+    }
+
+    save()
+    {
+        const state =
+            {
+            numThreads: this.numThreads(),
+            palette: this.braid.palette
+            }
+
+        this.saveStateToFile('', state);
+    }
 }
 
 const PatternSketch = (p5) => {
@@ -273,6 +335,9 @@ const PatternSketch = (p5) => {
         const numRows = app.numThreads();
         const numCols = app.numThreads() / 2;
 
+        // const direction = 0; // s direction
+        // const direction = 1; // z direction
+
         const kgEvens = app.numThreads()/2 + 3;
         const kgOdds = -1;
 
@@ -313,6 +378,7 @@ const PatternSketch = (p5) => {
                 let start = -1;
                 const numCycles = Math.floor(row/(app.numThreads()*2));
                 const numQuarterCycles = Math.floor(row/(app.numThreads()/2));
+
                 switch (style)
                 {
                 case 'kongo-gumi':
@@ -321,20 +387,30 @@ const PatternSketch = (p5) => {
                     {
                         start = 1 + Math.floor((row+1)/2) * kgOdds 
                                   + Math.floor(row/2) * kgEvens 
+                                //   + direction * 4
                     }
                     else
                     {
                         start = Math.floor(row/2) 
                               + Math.floor((row+1)/2) * (halfThreads+1) 
-                              - Math.floor(numCycles/2);
+                              - Math.floor(numCycles/2)
+                            //   + direction * 2
                     }
+
+                    // start += row * 2 * direction;
 
                     if (Math.floor(numQuarterCycles/2) % 2 == 1)
                     {
                         start += halfThreads;
                     }
 
+                    // start = (app.numThreads() - start) % app.numThreads() + app.numThreads();
                     start = start % app.numThreads();
+                    // if (numQuarterCycles == 1)
+                    //     start = NaN
+
+                    // if (direction > 0)
+                    //     start = 16 - start
 
                     const startMap = kgMap[start % app.numThreads()];
                     const index = (startMap + col) % app.numThreads();

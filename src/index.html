@@ -45,7 +45,7 @@
         }
         .color-details {
             flex: 1;
-            background-color: f0f0f0;
+            background-color: #f0f0f0;
             border-radius: 8px;
             padding: 0;
         }
@@ -77,6 +77,7 @@
                 <button id="redo-btn" onclick="app.redo()">redo</button>
                 <button id="load-btn" onclick="app.load()">load</button>
                 <button id="save-btn" onclick="app.save()">save</button>
+                <button id="snap-btn" onclick="app.screenshot()">snap</button>
                 <p id="load-file-message"></p>
                 <br>
                 <div id="color-picker" class="picker"></div>
@@ -85,7 +86,8 @@
         </div>
         <div class="hidden">
             <input id='load-file' type="file">
-            <a id="save-file" download="kumihimo-pattern.json"></a>
+            <a id="save-file"></a>
+            <canvas id="screenshot"></canvas>
         </div>
     </div>
     <script src="./app.js"></script>

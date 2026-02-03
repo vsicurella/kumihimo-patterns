@@ -34,6 +34,10 @@ class BraidDesigner extends BraidControls
     edits = [];
     redoIndex = -1
 
+    // graphics stuff (may move to a viewer class)
+    previewWidth = 0
+    previewHeight = 0
+
     constructor()
     {
         super(new Braid(16))
@@ -227,6 +231,7 @@ class BraidDesigner extends BraidControls
         const url = URL.createObjectURL(blob);
         
         const download = document.getElementById('save-file');
+        download.download = (name || 'kumihimo-pattern') + '.json';
         download.href = url;
         download.click();
     }
@@ -240,6 +245,46 @@ class BraidDesigner extends BraidControls
             }
 
         this.saveStateToFile('', state);
+    }
+
+    screenshot(name)
+    {
+        // pretty messy!
+
+        const srcScaling = 2; // unsure why we need this
+
+        const labelMargins = (this.radius*this.labelScalar) - this.radius;
+        // const patternSize = this.radius*2 + labelMargins * 2;
+        const patternSize = this.patternWidth;
+        const margins = 25;
+
+        const canvas = document.getElementById('screenshot');
+        canvas.width = this.previewWidth + (patternSize/2) + margins * 2;
+        canvas.height = this.previewHeight + margins * 2;
+
+        const ctx = canvas.getContext('2d');
+
+        const preview = document.getElementById('preview-canvas');
+        const pattern = document.getElementById('pattern-canvas');
+
+        // const previewSrcX = (preview.width-this.previewWidth)*0.5/srcScaling;
+        const previewSrcX = 20;
+
+        ctx.fillStyle = '#f0f0f0'
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.drawImage(preview, 
+            previewSrcX, 0, this.previewWidth*srcScaling, this.previewHeight*srcScaling, 
+            margins, margins, this.previewWidth, this.previewHeight);
+        ctx.drawImage(pattern, 
+            this.cx-this.radius - labelMargins, this.cy-this.radius - labelMargins, patternSize*srcScaling, patternSize*srcScaling, 
+            300, labelMargins, patternSize, patternSize);
+
+        const url = canvas.toDataURL('image/png');
+        const download = document.getElementById('save-file');
+        download.download = (name || 'kumihimo-pattern-preview') + '.png'
+        download.href = url;
+        download.click();
     }
 }
 
@@ -271,6 +316,7 @@ const PatternSketch = (p5) => {
         const area = document.getElementsByClassName('pattern-preview')[0];
         const canvas = p5.createCanvas(area.clientWidth, area.clientHeight);
         canvas.parent(area);
+        canvas.elt.id = 'preview-canvas'
 
         p5.colorMode('rgb')
 
@@ -328,9 +374,14 @@ const PatternSketch = (p5) => {
 
         if (patternStyle == 'hex')
         {
-            patternWidth = unitWidth * Math.sqrt(3)/2 * (app.numThreads() + 0.5)
+            patternWidth = unitWidth * Math.sqrt(3) * (app.numThreads() + 0.5)
         }
-        const origin = { x: p5.abs(p5.width - patternWidth) * 0.5, y: 20 };
+
+        app.previewWidth = patternWidth;
+        app.previewHeight = patternHeight;
+
+        // const origin = { x: p5.abs(p5.width - patternWidth) * 0.5, y: 20 };
+        const origin = { x: 20, y: 20 };
 
         const numRows = app.numThreads();
         const numCols = app.numThreads() / 2;
@@ -505,7 +556,7 @@ const ColorSketch = (p5) => {
         const area = document.getElementsByClassName('color-details')[0];
         const canvas = p5.createCanvas(area.clientWidth, area.clientHeight);
         canvas.parent(area);
-        canvas.elt.id='color-controls-canvas'
+        canvas.elt.id='pattern-canvas'
 
         app.setSketch(p5);
     };

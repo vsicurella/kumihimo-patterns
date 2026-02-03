@@ -5,7 +5,7 @@ class BraidControls
     sketch;
 
     DIV;
-    CANVAS;
+    // CANVAS;
     PADDING;
 
     picker;
@@ -24,10 +24,14 @@ class BraidControls
     layout;
 
     // params
-    showThreadNums;
+    showThreadNums=true;
 
     // recentColors = []
     currentColor = ''
+
+    // graphics stuff (may move to a viewer class)
+    patternWidth = 0
+    patternHeight = 0
 
     constructor(braid)
     {
@@ -39,20 +43,24 @@ class BraidControls
 
     constructCircle(p5)
     {
-        this.radius = p5.height * this.radiusScalar;
-        this.cx = p5.width/2;
-        this.cy = p5.height/3
+        // this.radius = p5.height * this.radiusScalar;
+        this.radius = 175;
+        this.cx = this.radius * this.labelScalar + 20
+        this.cy = this.radius * this.labelScalar + 20;
+
+        this.patternWidth = this.radius * 2 + this.radius * this.labelScalar * 2
+        this.patternHeight = p5.height;
     }
 
     setSketch(p5)
     {
         this.sketch = p5;
-        this.CANVAS = document.getElementById('color-controls-canvas')
 
         this.currentColor = this.braid.color(0);
 
         let numThreads = this.sketch.getItem('kumihimo-num-threads')
-        console.log('numthreads:',numThreads)
+        if (numThreads == null)
+            numThreads = 16;
         app.setNumThreads(numThreads);
         updateThreadsInput(numThreads)
 
@@ -90,11 +98,7 @@ class BraidControls
 
     resized(p5)
     {
-        // this.PADDING = parseInt(window.getComputedStyle(this.CANVAS.parentElement, null).getPropertyValue('padding'))
-
-        this.radius = p5.height * this.radiusScalar;
-        this.cx = p5.width/2;
-        this.cy = p5.height/2
+        this.constructCircle(p5)
 
         for (let t = 0; t < this.braid.size; t++)
         {

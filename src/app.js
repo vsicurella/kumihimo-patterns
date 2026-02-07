@@ -76,6 +76,12 @@ class BraidDesigner extends BraidControls
     {
         app.currentPattern = technique;
 
+        if (this.sketch){
+            this.sketch.storeItem('kumihimo-technique', technique);
+            const input = document.getElementById('pattern-select');
+            input.value = technique;
+        }
+
         const threadNumInput = document.getElementById('num-threads-input');
         if (technique === PATTERNS.KongoGumi)
         {
@@ -555,6 +561,12 @@ const PatternSketch = (p5) => {
         times++
 
     };
+
+    p5.windowResized = () =>
+    {
+        const area = document.getElementsByClassName('pattern-preview')[0];
+        p5.resizeCanvas(area.clientWidth, area.clientHeight)
+    }
 };
 
 const ColorSketch = (p5) => {
@@ -617,6 +629,12 @@ const ColorSketch = (p5) => {
 
         app.setThreadColor(swatch, app.currentColor);
     }
+
+    p5.windowResized = () =>
+    {
+        const area = document.getElementsByClassName('color-details')[0];
+        p5.resizeCanvas(area.clientWidth, area.clientHeight);
+    }
 };
 
 // APP INIT
@@ -640,13 +658,13 @@ for (const key in PATTERNS)
 }
 
 // Setup callbacks
-patternSelector.onchange = () =>
+patternSelector.oninput = () =>
 {
     app.setTechnique(patternSelector.value);
 }
 
 const numThreadsInput = document.getElementById('num-threads-input');
-numThreadsInput.onchange = () =>
+numThreadsInput.oninput = () =>
 {
     const threads = parseInt(numThreadsInput.value)
     app.setNumThreads(threads)

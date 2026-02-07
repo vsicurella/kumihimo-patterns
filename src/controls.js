@@ -24,7 +24,7 @@ class BraidControls
     layout;
 
     // params
-    showThreadNums=true;
+    showThreadNums;
 
     // recentColors = []
     currentColor = ''
@@ -57,6 +57,11 @@ class BraidControls
         this.sketch = p5;
 
         this.currentColor = this.braid.color(0);
+
+        let technique = this.sketch.getItem('kumihimo-technique')
+        if (technique == null)
+            technique = PATTERNS.KongoGumi;
+        app.setTechnique(technique);
 
         let numThreads = this.sketch.getItem('kumihimo-num-threads')
         if (numThreads == null)

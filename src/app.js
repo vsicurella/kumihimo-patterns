@@ -280,6 +280,15 @@ class BraidDesigner extends BraidControls
             this.cx-this.radius - labelMargins, this.cy-this.radius - labelMargins, patternSize*srcScaling, patternSize*srcScaling, 
             300, labelMargins, patternSize, patternSize);
 
+        ctx.fillStyle = 'black'
+        ctx.font = "32px serif"
+        const ptw = ctx.measureText(app.currentPattern);
+        ctx.fillText(app.currentPattern, 300 + this.cx - (ptw.width * 0.5), this.cy-16);
+
+        const threadsText = app.numThreads() + " threads";
+        const ttw = ctx.measureText(threadsText);
+        ctx.fillText(threadsText, 300 + this.cx - (ttw.width * 0.5), this.cy+16)
+
         const url = canvas.toDataURL('image/png');
         const download = document.getElementById('save-file');
         download.download = (name || 'kumihimo-pattern-preview') + '.png'

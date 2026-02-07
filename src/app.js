@@ -493,7 +493,8 @@ const PatternSketch = (p5) => {
                     }
                     else // odds (shown as evens)
                     {
-                        thread = ((row - 1) * styleParity + 2 * col + 1) % app.numThreads()
+                        thread = ((row - 2 + styleParity) /* not sure about this above styleParity=3 */
+                            * styleParity + 2 * col + 1) % app.numThreads()
                     }
                 }
                 break;
